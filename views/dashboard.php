@@ -38,7 +38,22 @@ $remaining_count = $total_shipments - $delivered_count;
                         <i class="bi bi-graph-up-arrow me-1"></i> View Analytics
                     </button>
                 </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body">
+                            <h5 class="text-primary fw-bold mb-3"><i class="bi bi-gear-wide-connected me-2"></i>Quick Content Management</h5>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceModal">Add Service</button>
+                                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#addFAQModal">Add FAQ</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card bg-primary text-white border-0 shadow-sm mb-2">
@@ -212,6 +227,7 @@ $remaining_count = $total_shipments - $delivered_count;
         </div>
     </div>
 </div>
+
 <div class="modal fade" id="analyticsModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content shadow-lg border-0 rounded-4">
@@ -238,9 +254,31 @@ $remaining_count = $total_shipments - $delivered_count;
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="addServiceModal" tabindex="-1">
+    <div class="modal-dialog"><form action="../routes/admin_actions.php" method="POST" class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Add New Service</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="text" name="service_name" class="form-control mb-2" placeholder="Service Name" required>
+            <textarea name="description" class="form-control" placeholder="Description"></textarea>
+        </div>
+        <div class="modal-footer"><button type="submit" name="add_service" class="btn btn-primary">Save Service</button></div>
+    </form></div>
+</div>
+
+<div class="modal fade" id="addFAQModal" tabindex="-1">
+    <div class="modal-dialog"><form action="../routes/admin_actions.php" method="POST" class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Add New FAQ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="text" name="question" class="form-control mb-2" placeholder="Question" required>
+            <textarea name="answer" class="form-control" placeholder="Answer" required></textarea>
+        </div>
+        <div class="modal-footer"><button type="submit" name="add_faq" class="btn btn-primary">Save FAQ</button></div>
+    </form></div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Order Status Pie Chart
     const ctxPie = document.getElementById('orderStatusChart').getContext('2d');
     new Chart(ctxPie, {
         type: 'pie',
@@ -254,7 +292,6 @@ document.addEventListener("DOMContentLoaded", function() {
         },
         options: { responsive: true, maintainAspectRatio: false }
     });
-    // 2. Financial Bar Graph
     const ctxBar = document.getElementById('financeBarChart').getContext('2d');
     new Chart(ctxBar, {
         type: 'bar',

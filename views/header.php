@@ -58,6 +58,15 @@ if (in_array($current_page, $protected_pages)) {
                 <li class="nav-item">
                     <a class="nav-link" href="<?php echo $base_url; ?>views/about.php">About Us</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo $base_url; ?>views/services.php">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo $base_url; ?>views/shipping_calc.php">Calculator</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo $base_url; ?>views/faq.php">FAQ</a>
+                </li>
                 <?php if($isAdmin): ?>
                     <li class="nav-item ms-lg-3">
                         <a href="<?php echo $base_url; ?>views/dashboard.php" class="nav-link text-info fw-bold">

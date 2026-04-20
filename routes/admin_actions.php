@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "Error: " . mysqli_error($conn);
         }
     }
-    // 3. STARTCURE PAYOUT APPROVAL (Line 64 Fixed)
+    // 3. STARTCURE PAYOUT APPROVAL
     else if (isset($_POST['approve_payout'])) {
         if (!isset($_SESSION['admin_logged_in'])) {
             die("Unauthorized access!");
@@ -47,13 +47,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $req_id = mysqli_real_escape_string($conn, $_POST['req_id']);
         $rider_id = mysqli_real_escape_string($conn, $_POST['rider_id']);
         $amount = mysqli_real_escape_string($conn, $_POST['amount']);
-        // A. Update withdrawal request status
         $sql1 = "UPDATE withdrawal_requests SET status = 'Approved' WHERE id = '$req_id'";
-        // B. Deduct amount from rider's wallet balance
         $sql2 = "UPDATE delivery_boys SET wallet_balance = wallet_balance - $amount WHERE id = '$rider_id'";
-        // C. Log the debit transaction (FIXED: shipment_id = 0 added)
         $desc = mysqli_real_escape_string($conn, "Withdrawal of ₹$amount Approved & Paid");
-        // YAHAN FIX HAI: shipment_id column mein '0' bhej rahe hain
         $sql3 = "INSERT INTO rider_transactions (rider_id, shipment_id, amount, type, description) 
                  VALUES ('$rider_id', '0', '$amount', 'Debit', '$desc')";
         if (mysqli_query($conn, $sql1) && mysqli_query($conn, $sql2)) {
@@ -66,6 +62,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             echo "Error: " . mysqli_error($conn);
         }
+    }
+    // 4. ADD SERVICE (NEW)
+    else if (isset($_POST['add_service'])) {
+        if (!isset($_SESSION['admin_logged_in'])) { die("Access Denied!"); }
+        $name = mysqli_real_escape_string($conn, $_POST['service_name']);
+        $desc = mysqli_real_escape_string($conn, $_POST['description']);
+        $conn->query("INSERT INTO services (service_name, description) VALUES ('$name', '$desc')");
+        header("Location: ../views/dashboard.php?update=success");
+        exit();
+    }
+    // 5. ADD FAQ (NEW)
+    else if (isset($_POST['add_faq'])) {
+        if (!isset($_SESSION['admin_logged_in'])) { die("Access Denied!"); }
+        $q = mysqli_real_escape_string($conn, $_POST['question']);
+        $a = mysqli_real_escape_string($conn, $_POST['answer']);
+        $conn->query("INSERT INTO faqs (question, answer) VALUES ('$q', '$a')");
+        header("Location: ../views/dashboard.php?update=success");
+        exit();
     }
 } else {
     echo "Direct access not allowed!";
