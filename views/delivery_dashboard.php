@@ -220,5 +220,40 @@ $disabled_attr = !$can_withdraw ? 'disabled' : '';
             btn.classList.add('btn-active');
         }
     }
+
+    // Senior Dev Injection: Async GPS core tracking engine sync module
+    function syncRiderLiveLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                let lat = position.coords.latitude;
+                let lng = position.coords.longitude;
+
+                let formData = new FormData();
+                formData.append('lat', lat);
+                formData.append('lng', lng);
+
+                fetch('../routes/update_rider_coords.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("GPS Location Packets Synced:", data.status);
+                })
+                .catch(err => console.error("GPS Endpoint Sync Failed:", err));
+            }, function(error) {
+                console.warn("Location transmission blocked by client permission policy.");
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000
+            });
+        }
+    }
+
+    // Initialize background interval loop only if session rider parameters match
+    if (<?php echo isset($_SESSION['dboy_id']) ? 'true' : 'false'; ?>) {
+        setInterval(syncRiderLiveLocation, 15000); // Poll transmission loop every 15 seconds
+        syncRiderLiveLocation(); // On load ignition
+    }
 </script>
 <?php include "footer.php"; ?>

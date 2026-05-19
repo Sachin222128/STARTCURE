@@ -64,13 +64,20 @@ include "views/header.php";
             <div class="option-item active" onclick="setSearchType(this, 'AWB No.')">AWB No.</div>
             <div class="option-item" onclick="setSearchType(this, 'Mobile No.')">Mobile No.</div>
             <div class="option-item" onclick="setSearchType(this, 'Order ID')">Order ID</div>
+            <div class="option-item" onclick="setSearchType(this, 'Bulk AWB')">Bulk AWB</div>
         </div>
         <div class="track-form-area">
             <form action="views/track_result.php" method="GET" class="d-flex w-100 align-items-center">
                 <input type="hidden" name="search_type" id="search_type" value="AWB No.">
+                
                 <input type="text" name="tid" id="main_search_input" 
                        class="form-control track-input" 
                        placeholder="Enter AWB No." required>
+                
+                <textarea name="bulk_awb" id="bulk_search_input" 
+                          class="form-control track-input d-none" 
+                          rows="2" placeholder="Enter Multiple AWB Numbers separated by commas (e.g. STC1001, STC1002)"></textarea>
+                
                 <button type="submit" class="btn-track-submit shadow-sm">
                     TRACK <i class="bi bi-arrow-right ms-1"></i>
                 </button>
@@ -125,8 +132,28 @@ include "views/header.php";
     function setSearchType(element, type) {
         document.querySelectorAll('.option-item').forEach(item => item.classList.remove('active'));
         element.classList.add('active');
-        document.getElementById('main_search_input').placeholder = "Enter " + type;
         document.getElementById('search_type').value = type;
+
+        const singleInput = document.getElementById('main_search_input');
+        const bulkInput = document.getElementById('bulk_search_input');
+
+        // Dynamic toggling logic based on selection type
+        if (type === 'Bulk AWB') {
+            singleInput.classList.add('d-none');
+            singleInput.removeAttribute('required');
+            
+            bulkInput.classList.remove('d-none');
+            bulkInput.setAttribute('required', 'required');
+            bulkInput.focus();
+        } else {
+            bulkInput.classList.add('d-none');
+            bulkInput.removeAttribute('required');
+            
+            singleInput.classList.remove('d-none');
+            singleInput.setAttribute('required', 'required');
+            singleInput.placeholder = "Enter " + type;
+            singleInput.focus();
+        }
     }
     const chatToggle = document.getElementById('chat-toggle');
     const chatBox = document.getElementById('chat-box');

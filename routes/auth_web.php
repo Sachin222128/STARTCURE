@@ -1,13 +1,17 @@
 <?php
+// STARTCURE Auth Web Router Controller Engine
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
 include "../app/db_connection.php";
+
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'] ?? $_POST['type'] ?? '';  
+    
     // --- 1. CUSTOMER LOGIN ---
     if ($action == 'customer_login') {
         $email = $_POST['email'];
@@ -33,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('No accounts found!'); window.location.href='../views/login.php';</script>";
         }
     }
+    
     // --- 2. ADMIN LOGIN ---
     else if ($action == 'admin_login') {
         $admin_id = $_POST['admin_id'];
@@ -52,15 +57,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header("Location: ../views/dashboard.php"); 
                 exit();
             } else {
-                // UPDATE: Redirecting back to secret admin login instead of public login.php
                 echo "<script>alert('Incorrect Admin Password!'); window.location.href='../views/admin_login.php';</script>";
             }
         } else {
-            // UPDATE: Redirecting back to secret admin login instead of public login.php
             echo "<script>alert('Admin account not found!'); window.location.href='../views/admin_login.php';</script>";
         }
     }
-    //3. DELIVERY BOY LOGIN (Rider)
+    
+    // --- 3. DELIVERY BOY LOGIN (Rider) ---
     else if ($action == 'delivery_login') {
         $email = $_POST['email'];
         $pass  = $_POST['password'];
@@ -91,7 +95,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('Rider account not found!'); window.location.href='../views/delivery_login.php';</script>";
         }
     }
-    //4. CUSTOMER SIGNUP 
+    
+    // --- 4. CUSTOMER SIGNUP ---
     else if ($action == 'customer_signup') {
         $full_name = $_POST['first_name'] . " " . $_POST['last_name']; 
         $email     = $_POST['email'];
@@ -113,7 +118,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     }
-    //5. RIDER SIGNUP
+    
+    // --- 5. RIDER SIGNUP ---
     else if ($action == 'rider_signup') {
         $email = $_POST['email'];
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
@@ -132,7 +138,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     }
-    //6. ADMIN RIDER APPROVAL / REJECTION 
+    
+    // --- 6. ADMIN RIDER APPROVAL / REJECTION ---
     else if ($action == 'update_rider_status') {
         if (!isset($_SESSION['admin_logged_in'])) {
             echo "<script>alert('Access Denied!'); window.location.href='../views/login.php';</script>";
@@ -146,7 +153,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('Rider status updated to $status successfully!'); window.location.href='../views/admin_riders.php';</script>";
         }
     }
-    // 7. CUSTOMER PROFILE UPDATE 
+    
+    // --- 7. CUSTOMER PROFILE UPDATE ---
     else if ($action == 'update_profile') {
         $cid = $_SESSION['customer_id'];
         $stmt = $conn->prepare("UPDATE customers SET name=?, phone=?, address=?, district=?, state=?, pincode=? WHERE id=?");
@@ -157,24 +165,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "Error: " . $conn->error;
         }
     }
-    //8. FEEDBACK SUBMISSION LOGIC 
+    
+    // --- 8. STRICTOR FEEDBACK SUBMISSION ENGINE WITH LOG INJECTIONS ---
     else if ($action == 'submit_feedback') {
         $ship_id = (int)$_POST['shipment_id'];
         $rating = (int)$_POST['rating'];
-        $review = htmlspecialchars($_POST['review']); 
-        $tid = $_POST['tid'] ?? ''; 
+        $review = htmlspecialchars(trim($_POST['review'])); 
+        $tid = isset($_POST['tid']) ? trim($_POST['tid']) : ''; 
 
-        $stmt = $conn->prepare("UPDATE shipments SET rating = ?, review = ? WHERE id = ?");
-        $stmt->bind_param("isi", $rating, $review, $ship_id);
-        if ($stmt->execute()) {
-            if ($tid == 'my_bookings' || empty($tid)) {
-                echo "<script>alert('Thank you for your feedback!'); window.location.href='../views/my_bookings.php';</script>";
+        if ($ship_id > 0 && $rating >= 1 && $rating <= 5) {
+            // Strict transaction block verification update query
+            $stmt = $conn->prepare("UPDATE shipments SET rating = ?, review = ? WHERE id = ?");
+            $stmt->bind_param("isi", $rating, $review, $ship_id);
+            
+            if ($stmt->execute()) {
+                // Agar track_result screen se dynamic query pass ki gayi ho, toh tracking log audit table update karna
+                if (!empty($tid) && $tid !== 'my_bookings') {
+                    $log_status = "Feedback Submitted";
+                    $log_desc = "Customer rated experience: " . $rating . " Stars. Review: " . (!empty($review) ? $review : 'No details provided');
+                    
+                    $log_stmt = $conn->prepare("INSERT INTO shipment_logs (tracking_id, status, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $tid, $log_status, $log_desc);
+                    $log_stmt->execute();
+                    
+                    echo "<script>alert('Thank you for your feedback!'); window.location.href='../views/track_result.php?tid=" . urlencode($tid) . "';</script>";
+                    exit();
+                } else {
+                    echo "<script>alert('Thank you for your feedback!'); window.location.href='../views/my_bookings.php';</script>";
+                    exit();
+                }
             } else {
-                echo "<script>alert('Thank you for your feedback!'); window.location.href='../views/track_result.php?tid=$tid';</script>";
+                echo "<script>alert('Error updating feedback inside core server matrix.'); window.location.href='../index.php';</script>";
+                exit();
             }
+        } else {
+            echo "<script>alert('Invalid rating parameters constraints verification failed.'); window.location.href='../index.php';</script>";
+            exit();
         }
     }
-    // 9. SUPPORT TICKET SUBMISSION 
+    
+    // --- 9. SUPPORT TICKET SUBMISSION ---
     else if ($action == 'submit_ticket') {
         if (!isset($_SESSION['customer_id'])) exit();
         $customer_id = $_SESSION['customer_id'];
@@ -188,7 +218,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('Your support ticket has been raised successfully!'); window.location.href='../views/support.php';</script>";
         }
     }
-    // 10. RESOLVE SUPPORT TICKET 
+    
+    // --- 10. RESOLVE SUPPORT TICKET ---
     else if ($action == 'resolve_ticket') {
         if (!isset($_SESSION['admin_logged_in'])) exit();
         $remarks = htmlspecialchars($_POST['admin_remarks']);
@@ -198,7 +229,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('Ticket Resolved with remarks!'); window.location.href='../views/support.php';</script>";
         }
     }
-    // 11. NEW: SEND TICKET REPLY (Chat System) 
+    
+    // --- 11. SEND TICKET REPLY (Chat System) ---
     else if ($action == 'send_ticket_reply') {
         $ticket_id = (int)$_POST['ticket_id'];
         $sender_type = $_POST['sender_type']; // 'Customer' or 'Admin'

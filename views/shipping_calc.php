@@ -20,7 +20,7 @@ $rates_data = mysqli_fetch_all($rates, MYSQLI_ASSOC);
                                placeholder="e.g. 2.5" required>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label fw-bold">Delivery Route/Location:</label>
                         <select name="rate" class="form-select border-primary" required>
                             <option value="" disabled selected>-- Select Destination --</option>
@@ -33,14 +33,57 @@ $rates_data = mysqli_fetch_all($rates, MYSQLI_ASSOC);
                             <?php } ?>
                         </select>
                     </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Billing Currency:</label>
+                        <select name="currency" class="form-select border-primary" required>
+                            <option value="INR" <?php echo (isset($_POST['currency']) && $_POST['currency'] == 'INR') ? 'selected' : ''; ?>>INR (₹ - Indian Rupee)</option>
+                            <option value="USD" <?php echo (isset($_POST['currency']) && $_POST['currency'] == 'USD') ? 'selected' : ''; ?>>USD ($ - United States Dollar)</option>
+                        </select>
+                    </div>
                     
                     <button type="submit" name="calc" class="btn btn-primary w-100 py-2 fw-bold">Calculate Estimated Cost</button>
                 </form>
 
                 <?php if(isset($_POST['calc'])) {
+                    // 100% Untouched original billing formula matrix calculation
                     $total = (float)$_POST['weight'] * (float)$_POST['rate'];
-                    echo "<div class='alert alert-success mt-4 border-0 shadow-sm'>
-                            <i class='bi bi-check-circle-fill me-2'></i> Estimated Cost: <strong>₹" . number_format($total, 2) . "</strong>
+                    
+                    // Corporate Tax Constraints Addition
+                    $selected_currency = isset($_POST['currency']) ? $_POST['currency'] : 'INR';
+                    $gst_rate = 0.18; // 18% GST Support
+                    $usd_conversion_factor = 85.00; // 1 USD = 85 INR standard enterprise baseline
+
+                    $base_price_inr = $total;
+                    $gst_amount_inr = $base_price_inr * $gst_rate;
+                    $final_total_inr = $base_price_inr + $gst_amount_inr;
+
+                    // Rendering conditions check layer based on dropdown selection
+                    if ($selected_currency === 'USD') {
+                        $display_symbol = '$';
+                        $print_base = $base_price_inr / $usd_conversion_factor;
+                        $print_gst = $gst_amount_inr / $usd_conversion_factor;
+                        $print_total = $final_total_inr / $usd_conversion_factor;
+                    } else {
+                        $display_symbol = '₹';
+                        $print_base = $base_price_inr;
+                        $print_gst = $gst_amount_inr;
+                        $print_total = $final_total_inr;
+                    }
+
+                    echo "<div class='alert alert-success mt-4 border-0 shadow-sm' style='border-radius:10px;'>
+                            <div class='d-flex justify-content-between mb-1 small text-muted'>
+                                <span>Base Shipping Cost:</span>
+                                <span>" . $display_symbol . number_format($print_base, 2) . "</span>
+                            </div>
+                            <div class='d-flex justify-content-between mb-2 small text-muted border-bottom pb-2'>
+                                <span>GST (18% Compliance):</span>
+                                <span>" . $display_symbol . number_format($print_gst, 2) . "</span>
+                            </div>
+                            <div class='d-flex justify-content-between align-items-center fw-bold text-success fs-5'>
+                                <span><i class='bi bi-check-circle-fill me-1'></i> Total Estimated Cost:</span>
+                                <span>" . $display_symbol . number_format($print_total, 2) . " " . $selected_currency . "</span>
+                            </div>
                           </div>";
                 } ?>
             </div>
