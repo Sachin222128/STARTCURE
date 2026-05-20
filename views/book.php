@@ -42,6 +42,7 @@ $logged_email = $_SESSION['customer_email'] ?? '';
     .search-item:hover { background: #f0f7ff; color: #0061ff; }
     .success-overlay { display: none; text-align: center; padding: 40px; }
 </style>
+
 <div class="container py-5">
     <div id="successCard" class="success-overlay">
         <div class="card ship-card p-5 shadow-lg">
@@ -50,7 +51,7 @@ $logged_email = $_SESSION['customer_email'] ?? '';
             <div class="alert alert-info py-3 my-4">
                 <h4 class="mb-0 fw-bold" id="tracking_id_text"></h4>
             </div>
-            <p class="text-muted">Please save this Tracking ID for your reference.</p>
+            <p class="text-muted">Please check your registered email for the automatic payment receipt.</p>
             <div class="mt-4">
                 <button class="btn-logistics px-4" onclick="window.location.reload()">Book Another Shipment</button>
             </div>
@@ -81,7 +82,7 @@ $logged_email = $_SESSION['customer_email'] ?? '';
                         <div class="row g-3">
                             <div class="col-md-6"><label class="form-label">Sender Name</label><input type="text" name="s_name" class="form-control" value="<?= $logged_name ?>" required></div>
                             <div class="col-md-6"><label class="form-label">Contact Number</label><input type="tel" name="s_mobile" class="form-control" value="<?= $logged_phone ?>" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="10 Digit Mobile" required></div>
-                            <div class="col-12"><label class="form-label">Sender Email</label><input type="email" name="s_email" class="form-control" value="<?= $logged_email ?>" required></div>
+                            <div class="col-12"><label class="form-label">Sender Email</label><input type="email" name="s_email" id="sender_email_id" class="form-control" value="<?= $logged_email ?>" required></div>
                             <div class="col-md-3">
                                 <label class="form-label">Pincode <span id="s_loader" class="loader-inline"></span></label>
                                 <input type="text" name="s_pincode" id="s_pincode" class="form-control" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, ''); fetchPinData(this.value, 's_district', 's_state', 's_loader')" placeholder="6 Digits" required>
@@ -104,9 +105,9 @@ $logged_email = $_SESSION['customer_email'] ?? '';
                     <div class="card ship-card p-4">
                         <h5 class="card-title"><i class="bi bi-geo-alt me-2 text-success"></i>2. Delivery Details</h5>
                         <div class="row g-3">
-                            <div class="col-md-6"><label class="form-label">Receiver Name</label><input type="text" name="r_name" class="form-control" required></div>
+                            <div class="col-md-6"><label class="form-label">Receiver Name</label><input type="text" name="r_name" id="receiver_name_id" class="form-control" required></div>
                             <div class="col-md-6"><label class="form-label">Receiver Mobile</label><input type="tel" name="r_mobile" class="form-control" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="10 Digit Mobile" required></div>
-                            <div class="col-12"><label class="form-label text-success">Receiver Email</label><input type="email" name="r_email" class="form-control" required></div>
+                            <div class="col-12"><label class="form-label text-success">Receiver Email</label><input type="email" name="r_email" id="receiver_email_id" class="form-control" required></div>
                             <div class="col-md-3">
                                 <label class="form-label">Pincode <span id="r_loader" class="loader-inline"></span></label>
                                 <input type="text" name="r_pincode" id="r_pincode" class="form-control" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, ''); fetchPinData(this.value, 'r_district', 'r_state', 'r_loader')" placeholder="6 Digits" required>
@@ -130,7 +131,7 @@ $logged_email = $_SESSION['customer_email'] ?? '';
                     <div class="card ship-card p-4">
                         <h5 class="card-title"><i class="bi bi-box-seam me-2 text-warning"></i>3. Shipment Content</h5>
                         <div class="row g-4">
-                            <div class="col-md-8"><label class="form-label">Item Description</label><input type="text" name="item_name" class="form-control" placeholder="e.g. Clothes, Electronics" required></div>
+                            <div class="col-md-8"><label class="form-label">Item Description</label><input type="text" name="item_name" id="item_name_id" class="form-control" placeholder="e.g. Clothes, Electronics" required></div>
                             <div class="col-md-4"><label class="form-label">Weight (kg)</label><input type="number" name="weight" id="weight" class="form-control" value="1" min="0.5" step="0.5" oninput="calculatePrice()" required></div>
                             <div class="col-12">
                                 <div class="row g-3">
@@ -192,7 +193,6 @@ $logged_email = $_SESSION['customer_email'] ?? '';
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// --- History & Step Navigation Logic ---
 window.addEventListener('popstate', function(event) {
     if (event.state && event.state.step) {
         updateStepUI(event.state.step);
@@ -229,13 +229,11 @@ function nextStep(current, next) {
             valid = false; 
         } else { 
             i.classList.remove('is-invalid'); 
-            // --- STRICT VALIDATION LOGIC ---
             if(i.name.includes('mobile') && i.value.length !== 10) {
                 Swal.fire('Error', 'The mobile number should be of 10 digits.', 'error');
                 i.classList.add('is-invalid');
                 valid = false;
             }
-            // Pincode Check
             if(i.name.includes('pincode') && i.value.length !== 6) {
                 Swal.fire('Error', 'Pincode should be of 6 digits.', 'error');
                 i.classList.add('is-invalid');
@@ -250,7 +248,6 @@ function nextStep(current, next) {
     history.pushState({step: next}, "Step " + next);
     updateStepUI(next);
 }
-//  Functions (Pincode, GPS, Search) ---
 function fetchPinData(pin, dId, sId, loaderId) {
     if (pin.length === 6) {
         document.getElementById(loaderId).style.display = 'inline-block';
@@ -277,7 +274,6 @@ function detectGPS(addrId, pId, dId, sId, loaderId) {
                 Swal.close();
                 document.getElementById(addrId).value = data.display_name;
                 let pin = data.address.postcode || '';
-                // Clean pin if it contains range
                 pin = pin.split(' ')[0].replace(/[^0-9]/g, '');
                 document.getElementById(pId).value = pin.substring(0,6);
                 if(pin.length >= 6) fetchPinData(pin.substring(0,6), dId, sId, loaderId);
@@ -328,21 +324,45 @@ function selectService(val) {
     document.querySelector(`input[value="${val}"]`).checked = true;
     calculatePrice();
 }
+
+// --- 🎯 CORE AJAX SUBMISSION & AUTO-EMAIL INJECTION MECHANISM ---
 document.getElementById('shipmentForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.innerText = "Processing...";
+    
+    // Fetch user input fields safely for background pipeline execution
+    const customerEmail = document.getElementById('receiver_email_id').value;
+    const customerName = document.getElementById('receiver_name_id').value;
+    const itemName = document.getElementById('item_name_id').value;
+    const totalPrice = document.getElementById('final_amount').value;
+
     fetch('../routes/web.php', { method: 'POST', body: new FormData(this) })
     .then(r => r.text()).then((res) => {
+        const generatedTrackingId = res.trim();
+        
+        // Asynchronous Dynamic Background Ping to Admin Router for Mail Dispatch
+        const emailData = new FormData();
+        emailData.append('action', 'trigger_manual_receipt');
+        emailData.append('customer_email', customerEmail);
+        emailData.append('customer_name', customerName);
+        emailData.append('tracking_id', generatedTrackingId);
+        emailData.append('item_name', itemName);
+        emailData.append('total_price', totalPrice);
+
+        // Fire and forget: process mail pipeline without delaying UX response
+        fetch('../routes/admin_actions.php', { method: 'POST', body: emailData })
+        .catch(err => console.log('Mail background process log mismatched.'));
+
         Swal.fire({
             title: 'Success!',
-            text: 'Your Tracking ID: ' + res,
+            text: 'Your Tracking ID: ' + generatedTrackingId,
             icon: 'success',
             confirmButtonColor: '#0061ff'
         }).then(() => {
             document.getElementById('formRow').style.display = 'none';
             document.getElementById('successCard').style.display = 'block';
-            document.getElementById('tracking_id_text').innerText = res;
+            document.getElementById('tracking_id_text').innerText = generatedTrackingId;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }).catch(err => {
