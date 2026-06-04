@@ -7,7 +7,6 @@ if(isset($_POST['pincode'])) {
     
     if(mysqli_num_rows($query) > 0) {
         $rate_data = mysqli_fetch_assoc($query);
-        
         // Senior Dev Injection: Dynamic API computation for Multi-Currency & GST Support
         // Agar dynamic checkout request ke dauran weight aur currency variables aate hain
         if (isset($_POST['weight'])) {

@@ -7,7 +7,6 @@ if (!isset($_GET['tracking_id']) || empty(trim($_GET['tracking_id']))) {
     echo json_encode(['error' => 'Missing Tracking ID parameter']);
     exit;
 }
-
 $tracking_id = mysqli_real_escape_string($conn, trim($_GET['tracking_id']));
 
 // Strict Join Query: Location packet sync regardless of intermediate state

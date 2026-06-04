@@ -12,5 +12,6 @@ if ($tid) {
         $reply = "Yes, I checked your parcel.(#$tid) abhi *$status* Is on stage. 😊";
     }
 }
+
 echo json_encode(['reply' => $reply]);
 ?>

@@ -229,7 +229,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('Ticket Resolved with remarks!'); window.location.href='../views/support.php';</script>";
         }
     }
-    
     // --- 11. SEND TICKET REPLY (Chat System) ---
     else if ($action == 'send_ticket_reply') {
         $ticket_id = (int)$_POST['ticket_id'];

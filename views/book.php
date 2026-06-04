@@ -325,7 +325,7 @@ function selectService(val) {
     calculatePrice();
 }
 
-// --- 🎯 CORE AJAX SUBMISSION & AUTO-EMAIL INJECTION MECHANISM ---
+// -🎯 CORE AJAX SUBMISSION & AUTO-EMAIL INJECTION MECHANISM -
 document.getElementById('shipmentForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
